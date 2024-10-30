@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import apiClient from "../services/api-client";
 import { AxiosResponse } from "axios";
 
@@ -8,30 +8,30 @@ interface Game {
 }
 
 const useGameData = () => {
-  const [gameData, setGameData] = useState<Game | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null); // Change error to string for simpler handling
+  const fetchGameData = async () => {
+    const token = localStorage.getItem("access_token");
 
-  useEffect(() => {
-    const fetchGameData = async () => {
-      setLoading(true);
-      setError(null); // Reset error state on new fetch
-      try {
-        const response: AxiosResponse<Game> = await apiClient.get("/banana_api");
-        setGameData(response.data);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
-        setError(errorMessage);
-        console.error("Error fetching game data:", errorMessage); // Log error for debugging
-      } finally {
-        setLoading(false);
-      }
-    };
+    const response: AxiosResponse<Game> = await apiClient.get("/banana_api", {
+      headers: {
+        Authorization: `Bearer ${token}`, 
+      },
+    });
+    return response.data;
+  };
 
-    fetchGameData();
-  }, []); // Fetch data once on mount
+  const {
+    data: gameData,
+    isLoading: loading,
+    isError,
+    error,
+    refetch,
+  } = useQuery<Game, Error>({
+    queryKey: ["gameData"], 
+    queryFn: fetchGameData, 
+    retry: 1,
+  });
 
-  return { gameData, loading, error };
+  return { gameData, loading, isError, error, refetch };
 };
 
 export default useGameData;

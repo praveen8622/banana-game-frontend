@@ -1,4 +1,4 @@
-// components/Login.tsx
+// components/Register.tsx
 import React, { useState } from "react";
 import {
   Box,
@@ -8,35 +8,38 @@ import {
   Input,
   Alert,
   Text,
-  InputGroup,
   Flex,
   Grid,
-  Checkbox,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import useLogin from "../hooks/useLogin";
-const Login = () => {
+import useRegister from "../hooks/useRegister";
+
+const Register = () => {
+  const [fullname, setFullname] = useState("");
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login, loading, error } = useLogin();
+  const { register, loading, error } = useRegister();
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const response = await login(username, password);
-    if (response) {
-      navigate("/home");
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
     }
+    await register(username, password);
   };
 
-  const handleSignUp = () => {
+  const handleSignIn = () => {
     setIsLoading(true);
+
     setTimeout(() => {
       setIsLoading(false);
     }, 2000);
-    navigate("/register");
+    navigate("/");
   };
 
   return (
@@ -49,15 +52,41 @@ const Login = () => {
       >
         <Grid templateColumns="1fr 1fr" gap={0}>
           <Box p={10} maxWidth="800px" borderRightWidth="1px">
-            <form onSubmit={handleLogin}>
+            <form onSubmit={handleRegister}>
               <Text
                 fontSize="20"
                 mb={10}
                 textAlign="center"
                 fontFamily="'Georgia', serif"
               >
-                Please login to play the game
+                Register to start playing!
               </Text>
+
+              <FormControl mb={4}>
+                <FormLabel htmlFor="fullname">Full Name</FormLabel>
+                <Input
+                  id="fullname"
+                  type="text"
+                  value={fullname}
+                  onChange={(e) => setFullname(e.target.value)}
+                  required
+                  disabled={loading}
+                  width="full"
+                />
+              </FormControl>
+
+              <FormControl mb={4}>
+                <FormLabel htmlFor="email">Email</FormLabel>
+                <Input
+                  id="email"
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                  width="full"
+                />
+              </FormControl>
 
               <FormControl mb={4}>
                 <FormLabel htmlFor="username">Username</FormLabel>
@@ -71,32 +100,41 @@ const Login = () => {
                   width="full"
                 />
               </FormControl>
+
               <FormControl mb={4}>
                 <FormLabel htmlFor="password">Password</FormLabel>
-                <InputGroup>
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                    width="full"
-                  />
-                </InputGroup>
-                <Checkbox
-                  mt={2}
-                  isChecked={showPassword}
-                  onChange={() => setShowPassword((prev) => !prev)}
-                >
-                  Show Password
-                </Checkbox>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  width="full"
+                />
               </FormControl>
+
+              <FormControl mb={4}>
+                <FormLabel htmlFor="confirmPassword">
+                  Confirm Password
+                </FormLabel>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  width="full"
+                />
+              </FormControl>
+
               {error && (
                 <Alert status="error" mb={4}>
                   {error}
                 </Alert>
               )}
+
               <Button
                 colorScheme="teal"
                 isLoading={loading}
@@ -105,29 +143,30 @@ const Login = () => {
                 width="full"
                 mb={4}
               >
-                Login
+                Register
               </Button>
             </form>
           </Box>
+
           <Box p={10} maxWidth="600px">
             <Text
               fontSize="4xl"
-              mt={35}
+              mt={100}
               mb={5}
               textAlign="center"
               fontFamily="'Georgia', serif"
             >
-              Welcome to Banana Game
+              Join Banana Game!
             </Text>
             <Text mb={4} textAlign="center">
               Don't have an account?
               <Button
                 variant="link"
-                onClick={handleSignUp}
+                onClick={handleSignIn}
                 isLoading={isLoading}
                 ml={1}
               >
-                Sign Up
+                Login
               </Button>
             </Text>
           </Box>
@@ -137,4 +176,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;

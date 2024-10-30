@@ -21,7 +21,7 @@ function App() {
           <NavBar />
         </GridItem>
         <GridItem area="main" as="main" w="100%" p="4">
-          <AppRoutes /> {/* Use the routes defined in AppRoutes */}
+          <AppRoutes />
         </GridItem>
       </Grid>
     </Router>

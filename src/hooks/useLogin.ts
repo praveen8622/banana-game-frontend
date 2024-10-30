@@ -1,10 +1,10 @@
 // hooks/useLogin.ts
 import { useState } from "react";
-import apiClient from "../services/api-client"; // Adjust according to your project structure
+import apiClient from "../services/api-client"; 
 
 interface LoginResponse {
-  token: string; // Adjust this based on your actual response structure
-  user: any; // Define a user type if possible
+  access_token: string; 
+  user: any; 
 }
 
 const useLogin = () => {
@@ -13,15 +13,23 @@ const useLogin = () => {
 
   const login = async (username: string, password: string): Promise<LoginResponse | void> => {
     setLoading(true);
-    setError(null); // Reset error state
+    setError(null); 
 
     try {
-      const response = await apiClient.post<LoginResponse>("/login", { username, password });
-      // Handle successful login (store token, redirect, etc.)
+      
+      const formData = new URLSearchParams();
+      formData.append("username", username);
+      formData.append("password", password);
+
+      const response = await apiClient.post<LoginResponse>("/login", formData, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded", 
+        },
+      });
+      
       console.log("Login successful:", response.data);
-      localStorage.setItem("token", response.data.token); // Store token
-      // Redirect logic could be added here
-      return response.data; // Return the response data if needed
+      localStorage.setItem("access_token", response.data.access_token); 
+      return response.data; 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Login failed. Please try again.";
       setError(errorMessage);
