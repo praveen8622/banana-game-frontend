@@ -30,10 +30,18 @@ const useLogin = () => {
       console.log("Login successful:", response.data);
       localStorage.setItem("access_token", response.data.access_token); 
       return response.data; 
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Login failed. Please try again.";
-      setError(errorMessage);
-      console.error("Login error:", errorMessage);
+    } catch (err: any) {
+      // Error handling
+      if (err.response) {
+        // Server response errors (e.g., 400, 401)
+        setError(err.response.data.message || 'Login failed. Please try again.');
+      } else if (err.request) {
+        // Network errors (e.g., no response from server)
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        // Other errors (e.g., code errors)
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

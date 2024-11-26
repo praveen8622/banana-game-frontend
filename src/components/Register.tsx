@@ -1,4 +1,3 @@
-// components/Register.tsx
 import React, { useState } from "react";
 import {
   Box,
@@ -20,26 +19,37 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const { register, loading, error } = useRegister();
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (password !== confirmPassword) {
       alert("Passwords do not match");
       return;
     }
-    await register(username, password);
+
+    if (!fullname || !email || !username || !password) {
+      alert("All fields are required");
+      return;
+    }
+
+    const result = await register({
+      full_name: fullname,
+      email,
+      username,
+      password,
+    });
+
+    if (result) {
+      console.log("result data:", result); // Show success message
+      navigate("/login"); // Redirect to login page after successful registration
+    }
   };
 
   const handleSignIn = () => {
-    setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-    navigate("/");
+    navigate("/login");
   };
 
   return (
@@ -159,11 +169,11 @@ const Register = () => {
               Join Banana Game!
             </Text>
             <Text mb={4} textAlign="center">
-              Don't have an account?
+              Already have an account?
               <Button
                 variant="link"
                 onClick={handleSignIn}
-                isLoading={isLoading}
+                isLoading={loading}
                 ml={1}
               >
                 Login

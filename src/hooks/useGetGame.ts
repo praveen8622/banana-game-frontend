@@ -29,6 +29,7 @@ const useGameData = () => {
     queryKey: ["gameData"], 
     queryFn: fetchGameData, 
     retry: 1,
+    refetchOnWindowFocus:false,
   });
 
   return { gameData, loading, isError, error, refetch };
