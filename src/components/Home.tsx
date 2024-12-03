@@ -11,9 +11,23 @@ import {
   Flex,
   HStack,
   IconButton,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
 } from "@chakra-ui/react";
-import { FaHeart, FaRegHeart } from "react-icons/fa";
-import { useState, FormEvent } from "react";
+import {
+  FaHeart,
+  FaRegHeart,
+  FaTrophy,
+  FaMedal,
+  FaThumbsUp,
+  FaClock,
+} from "react-icons/fa";
+import { useState, useEffect, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import useGameData from "../hooks/useGetGame";
@@ -25,11 +39,38 @@ const Home = () => {
   const [resultMessage, setResultMessage] = useState("");
   const [resultColor, setResultColor] = useState("teal.600");
   const [showNext, setShowNext] = useState(false);
+  const [achievements, setAchievements] = useState<string[]>([]);
+  const [correctStreak, setCorrectStreak] = useState(0);
+  const [roundsPlayed, setRoundsPlayed] = useState(0);
+  const [quickAnswerTime, setQuickAnswerTime] = useState<number | null>(null);
+  const [level, setLevel] = useState(1); // Track the player's level
+  const [timer, setTimer] = useState(60); // Timer state
+  const [timerInterval, setTimerInterval] = useState<number | null>(null); // Timer interval for clearing
+  const [timeUpModalOpen, setTimeUpModalOpen] = useState(false); // Modal state for Time up
 
   const navigate = useNavigate();
 
+  const startTimer = () => {
+    if (timerInterval) clearInterval(timerInterval); // Clear previous interval
+
+    setTimer(60); // Reset to 60 seconds for every new question
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev === 1) {
+          clearInterval(interval);
+          setTimeUpModalOpen(true); // Show "Time's Up" modal when time is over
+          return prev;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    setTimerInterval(interval); // Save interval reference to clear it when needed
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    const startTime = Date.now();
     if (!answer) {
       setResultMessage("Please enter an answer.");
       setResultColor("red.500");
@@ -47,9 +88,13 @@ const Home = () => {
       setResultMessage("That's Correct! You won!");
       setResultColor("green.500");
       setShowNext(true);
+      setCorrectStreak((prev) => prev + 1);
+      setQuickAnswerTime((Date.now() - startTime) / 1000);
+      setLevel((prev) => prev + 1);
     } else {
       const newLives = lives - 1;
       setLives(newLives);
+      setCorrectStreak(0);
 
       if (newLives > 0) {
         setResultMessage(`Incorrect. You have ${newLives} lives left.`);
@@ -65,8 +110,11 @@ const Home = () => {
   };
 
   const handleNext = async () => {
+    setRoundsPlayed((prev) => prev + 1);
     resetGameState();
     await refetch();
+    startTimer(); // Reset timer after every new question
+    checkTimerDecrease(); // Check if we need to decrease the timer
   };
 
   const handleSkip = async () => {
@@ -81,7 +129,14 @@ const Home = () => {
     setResultMessage("");
     setResultColor("teal.600");
     setShowNext(false);
+    setQuickAnswerTime(null);
     await refetch();
+  };
+
+  const checkTimerDecrease = () => {
+    if (correctStreak > 0 && correctStreak % 5 === 0) {
+      setTimer((prev) => Math.max(prev - 15, 15)); // Decrease timer by 15 seconds after every 5 correct answers
+    }
   };
 
   const handleLogout = () => {
@@ -100,6 +155,51 @@ const Home = () => {
     }
     return hearts;
   };
+
+  const checkAchievements = () => {
+    if (!achievements.includes("First Win") && correctStreak === 1) {
+      setAchievements((prev) => [...prev, "First Win"]);
+    }
+
+    if (!achievements.includes("Streak Master") && correctStreak >= 5) {
+      setAchievements((prev) => [...prev, "Streak Master"]);
+    }
+
+    if (!achievements.includes("Persistent Player") && roundsPlayed >= 10) {
+      setAchievements((prev) => [...prev, "Persistent Player"]);
+    }
+
+    if (!achievements.includes("Life Saver") && lives === 3 && showNext) {
+      setAchievements((prev) => [...prev, "Life Saver"]);
+    }
+
+    if (
+      !achievements.includes("Quick Thinker") &&
+      quickAnswerTime &&
+      quickAnswerTime <= 10
+    ) {
+      setAchievements((prev) => [...prev, "Quick Thinker"]);
+    }
+
+    if (!achievements.includes("Comeback King") && lives === 1 && showNext) {
+      setAchievements((prev) => [...prev, "Comeback King"]);
+    }
+
+    if (!achievements.includes("Perfectionist") && correctStreak >= 3) {
+      setAchievements((prev) => [...prev, "Perfectionist"]);
+    }
+  };
+
+  useEffect(() => {
+    if (showNext) {
+      checkAchievements();
+    }
+  }, [showNext, correctStreak, roundsPlayed, quickAnswerTime]);
+
+  useEffect(() => {
+    startTimer(); // Start timer when the component is mounted or question changes
+    return () => clearInterval(timerInterval!); // Cleanup on component unmount
+  }, []);
 
   if (loading) {
     return (
@@ -134,14 +234,7 @@ const Home = () => {
   }
 
   return (
-    <Box
-      p={5}
-      bg="gray.50"
-      minH="80vh"
-      display="flex"
-      flexDirection="column"
-      justifyContent="center"
-    >
+    <Box minH="100vh" bg="gray.100" p={5}>
       <Flex justifyContent="space-between" alignItems="center">
         <Heading
           as="h1"
@@ -150,91 +243,274 @@ const Home = () => {
           textAlign="center"
           color="teal.600"
         >
-          Welcome to Banana Game
+          Welcome to Banana Game - Level {level}
         </Heading>
-        <IconButton
-          icon={<FiLogOut />}
-          aria-label="Logout"
-          colorScheme="teal"
-          variant="outline"
-          onClick={handleLogout}
-        />
+        <Flex alignItems="center">
+          <IconButton
+            icon={<FiLogOut />}
+            aria-label="Logout"
+            colorScheme="teal"
+            variant="outline"
+            onClick={handleLogout}
+            mr={2} // Margin to space out the icon and the text
+          />
+          <Text onClick={handleLogout} color="teal.500" cursor="pointer">
+            Logout
+          </Text>
+        </Flex>
       </Flex>
+
+      <Box textAlign="center" fontSize="xl" color="teal.600">
+        <HStack spacing={2} justify="center">
+          <FaClock size={24} />
+          <Text>Timer: {timer} seconds</Text>
+        </HStack>
+      </Box>
+
       {gameData ? (
         <HStack spacing={5} width="full" align="stretch" height="full">
-          <Flex
-            width="60%"
-            height="full"
-            justifyContent="center"
-            alignItems="center"
-          >
+          <Flex direction="column" width="50%">
             <Image
               src={gameData.question}
               alt="Game Question"
               borderRadius="md"
               objectFit="cover"
               width="100%"
-              height="100%"
             />
+            <Flex direction="column" mt={5}>
+              <Flex mb={5} justifyContent="right">
+                {renderHearts()}
+              </Flex>
+              <form onSubmit={handleSubmit}>
+                <Input
+                  type="number"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  placeholder="Enter your answer"
+                  mb={5}
+                  variant="filled"
+                  borderColor="teal.300"
+                  disabled={lives === 0 || showNext}
+                  autoFocus
+                />
+
+                <Flex justifyContent="space-between" width="100%" mb={5}>
+                  <Button
+                    mt={3}
+                    type="submit"
+                    colorScheme="teal"
+                    isDisabled={lives === 0 || showNext}
+                    width="48%"
+                  >
+                    Submit
+                  </Button>
+
+                  <Button
+                    mt={3}
+                    colorScheme="blue"
+                    onClick={handleSkip}
+                    width="48%"
+                    isDisabled={lives === 0 || showNext}
+                  >
+                    Skip
+                  </Button>
+                </Flex>
+              </form>
+
+              <Text mt={3} color={resultColor}>
+                {resultMessage}
+              </Text>
+
+              {showNext && (
+                <Button mt={3} colorScheme="green" onClick={handleNext}>
+                  Next
+                </Button>
+              )}
+            </Flex>
           </Flex>
 
-          <Flex
-            direction="column"
-            justifyContent="center"
-            width="40%"
-            height="full"
-            borderWidth="1px"
-            borderRadius="lg"
-            padding="10"
-            boxShadow="lg"
-            bg="white"
+          <Box
+            width="50%"
+            height="50%"
+            p={5}
+            bg="gray.200"
+            borderRadius="md"
+            boxShadow="md"
           >
-            <Flex mb={5} justifyContent="right">
-              {renderHearts()}
-            </Flex>
-            <form onSubmit={handleSubmit}>
-              <Input
-                type="number"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="Enter your answer"
-                mb={5}
-                variant="filled"
-                borderColor="teal.300"
-                _focus={{ borderColor: "teal.500" }}
-                disabled={lives === 0 || showNext}
-              />
-              <Flex justifyContent="space-between">
-                <Button
-                  type="submit"
-                  colorScheme="teal"
-                  _hover={{ bg: "teal.600" }}
-                  _active={{ bg: "teal.700" }}
-                  isDisabled={lives === 0 || showNext}
-                >
-                  Submit
-                </Button>
-              </Flex>
-            </form>
-            <Text mt={3} color={resultColor}>
-              {resultMessage}
-            </Text>
-            {showNext ? (
-              <Button mt={3} colorScheme="green" onClick={handleNext}>
-                Next
-              </Button>
-            ) : lives > 0 ? (
-              <Button mt={3} colorScheme="gray" onClick={handleSkip}>
-                Skip
-              </Button>
-            ) : null}
-          </Flex>
+            <Heading size="md" mb={3} color="teal.700">
+              Achievements
+            </Heading>
+            <HStack spacing={5} wrap="wrap">
+              {achievements.length > 0 ? (
+                achievements.map((achievement, index) => (
+                  <Box key={index}>
+                    {/* Icon and Achievement Name */}
+                    {achievement === "First Win" && (
+                      <Box
+                        p={5}
+                        bg="yellow.100"
+                        borderRadius="md"
+                        boxShadow="md"
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
+                      >
+                        <FaTrophy color="gold" size="20" />
+                        <Text
+                          mt={1}
+                          fontSize="sm"
+                          color="gold"
+                          textAlign="center"
+                        >
+                          {achievement}
+                        </Text>
+                      </Box>
+                    )}
+
+                    {achievement === "Streak Master" && (
+                      <Box
+                        p={5}
+                        bg="gray.100"
+                        borderRadius="md"
+                        boxShadow="md"
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
+                      >
+                        <FaMedal color="silver" size="24" />
+                        <Text
+                          mt={2}
+                          fontSize="sm"
+                          color="silver"
+                          textAlign="center"
+                        >
+                          {achievement}
+                        </Text>
+                      </Box>
+                    )}
+
+                    {achievement === "Quick Thinker" && (
+                      <Box
+                        p={5}
+                        bg="blue.100"
+                        borderRadius="md"
+                        boxShadow="md"
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
+                      >
+                        <FaClock color="blue" size="24" />
+                        <Text
+                          mt={2}
+                          fontSize="sm"
+                          color="blue"
+                          textAlign="center"
+                        >
+                          {achievement}
+                        </Text>
+                      </Box>
+                    )}
+
+                    {achievement === "Life Saver" && (
+                      <Box
+                        p={5}
+                        bg="red.100"
+                        borderRadius="md"
+                        boxShadow="md"
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
+                      >
+                        <FaHeart color="red" size="24" />
+                        <Text
+                          mt={2}
+                          fontSize="sm"
+                          color="red"
+                          textAlign="center"
+                        >
+                          {achievement}
+                        </Text>
+                      </Box>
+                    )}
+
+                    {achievement === "Comeback King" && (
+                      <Box
+                        p={5}
+                        bg="green.100"
+                        borderRadius="md"
+                        boxShadow="md"
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
+                      >
+                        <FaThumbsUp color="green" size="24" />
+                        <Text
+                          mt={2}
+                          fontSize="sm"
+                          color="green"
+                          textAlign="center"
+                        >
+                          {achievement}
+                        </Text>
+                      </Box>
+                    )}
+
+                    {achievement === "Perfectionist" && (
+                      <Box
+                        p={5}
+                        bg="purple.100"
+                        borderRadius="md"
+                        boxShadow="md"
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
+                      >
+                        <FaTrophy color="purple" size="24" />
+                        <Text
+                          mt={2}
+                          fontSize="sm"
+                          color="purple"
+                          textAlign="center"
+                        >
+                          {achievement}
+                        </Text>
+                      </Box>
+                    )}
+                  </Box>
+                ))
+              ) : (
+                <Text>No achievements yet</Text>
+              )}
+            </HStack>
+          </Box>
         </HStack>
       ) : (
-        <Text textAlign="center" fontSize="lg" color="gray.600">
-          No game data available.
-        </Text>
+        <Text>No game data available</Text>
       )}
+      <Modal isOpen={timeUpModalOpen} onClose={() => setTimeUpModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Time's Up!</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text fontSize="lg" textAlign="center">
+              You ran out of time! Try again to answer the question.
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              colorScheme="blue"
+              mr={3}
+              onClick={() => {
+                setTimeUpModalOpen(false);
+                handleNext();
+              }}
+            >
+              Try Again
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };
