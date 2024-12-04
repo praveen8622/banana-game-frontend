@@ -29,9 +29,7 @@ import {
 } from "react-icons/fa";
 import { useState, useEffect, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiLogOut } from "react-icons/fi";
 import useGameData from "../hooks/useGetGame";
-import { BsBack } from "react-icons/bs";
 import { BiArrowToLeft } from "react-icons/bi";
 
 const Home = () => {
