@@ -13,7 +13,7 @@ const useGameData = () => {
 
     const response: AxiosResponse<Game> = await apiClient.get("/banana_api", {
       headers: {
-        Authorization: `Bearer ${token}`, 
+        Authorization: `Bearer ${token}`,
       },
     });
     return response.data;
@@ -21,18 +21,19 @@ const useGameData = () => {
 
   const {
     data: gameData,
-    isLoading: loading,
+    isLoading,
+    isFetching, 
     isError,
     error,
     refetch,
   } = useQuery<Game, Error>({
-    queryKey: ["gameData"], 
-    queryFn: fetchGameData, 
+    queryKey: ["gameData"],
+    queryFn: fetchGameData,
     retry: 1,
-    refetchOnWindowFocus:false,
+    refetchOnWindowFocus: false,
   });
 
-  return { gameData, loading, isError, error, refetch };
+  return { gameData, isLoading, isFetching, isError, error, refetch };
 };
 
 export default useGameData;

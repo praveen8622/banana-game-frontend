@@ -17,7 +17,6 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  ModalCloseButton,
 } from "@chakra-ui/react";
 import {
   FaHeart,
@@ -33,7 +32,7 @@ import { FiLogOut } from "react-icons/fi";
 import useGameData from "../hooks/useGetGame";
 
 const Home = () => {
-  const { gameData, loading, error, refetch } = useGameData();
+  const { gameData, isLoading, error, refetch, isFetching } = useGameData();
   const [answer, setAnswer] = useState("");
   const [lives, setLives] = useState(3);
   const [resultMessage, setResultMessage] = useState("");
@@ -99,12 +98,6 @@ const Home = () => {
       if (newLives > 0) {
         setResultMessage(`Incorrect. You have ${newLives} lives left.`);
         setResultColor("red.500");
-      } else {
-        setResultMessage(
-          `Incorrect. You've run out of lives. The correct answer was ${gameData?.solution}.`
-        );
-        setResultColor("red.500");
-        setShowNext(true);
       }
     }
   };
@@ -176,7 +169,8 @@ const Home = () => {
     if (
       !achievements.includes("Quick Thinker") &&
       quickAnswerTime &&
-      quickAnswerTime <= 10
+      quickAnswerTime <= 10 &&
+      correctStreak >= 5
     ) {
       setAchievements((prev) => [...prev, "Quick Thinker"]);
     }
@@ -185,7 +179,7 @@ const Home = () => {
       setAchievements((prev) => [...prev, "Comeback King"]);
     }
 
-    if (!achievements.includes("Perfectionist") && correctStreak >= 3) {
+    if (!achievements.includes("Perfectionist") && correctStreak >= 15) {
       setAchievements((prev) => [...prev, "Perfectionist"]);
     }
   };
@@ -198,10 +192,12 @@ const Home = () => {
 
   useEffect(() => {
     startTimer(); // Start timer when the component is mounted or question changes
-    return () => clearInterval(timerInterval!); // Cleanup on component unmount
+    return () => {
+      if (timerInterval) clearInterval(timerInterval);
+    }; // Cleanup on component unmount
   }, []);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Box
         textAlign="center"
@@ -299,7 +295,7 @@ const Home = () => {
                     mt={3}
                     type="submit"
                     colorScheme="teal"
-                    isDisabled={lives === 0 || showNext}
+                    isDisabled={lives === 0 || showNext || isFetching}
                     width="48%"
                   >
                     Submit
@@ -310,7 +306,7 @@ const Home = () => {
                     colorScheme="blue"
                     onClick={handleSkip}
                     width="48%"
-                    isDisabled={lives === 0 || showNext}
+                    isDisabled={lives === 0 || showNext || isFetching} // Disable when refetching
                   >
                     Skip
                   </Button>
@@ -491,10 +487,9 @@ const Home = () => {
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Time's Up!</ModalHeader>
-          <ModalCloseButton />
           <ModalBody>
             <Text fontSize="lg" textAlign="center">
-              You ran out of time! Try again to answer the question.
+              You ran out of time! The correct answer was: {gameData?.solution}
             </Text>
           </ModalBody>
           <ModalFooter>
@@ -507,6 +502,23 @@ const Home = () => {
               }}
             >
               Try Again
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      <Modal isOpen={lives === 0} onClose={resetGameState} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Game Over</ModalHeader>
+          <ModalBody>
+            <Text>
+              You've run out of lives. The correct answer was
+              {gameData?.solution}.
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="teal" onClick={resetGameState}>
+              Restart Game
             </Button>
           </ModalFooter>
         </ModalContent>
