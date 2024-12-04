@@ -17,6 +17,7 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  VStack,
 } from "@chakra-ui/react";
 import {
   FaHeart,
@@ -46,6 +47,8 @@ const Home = () => {
   const [timer, setTimer] = useState(60); // Timer state
   const [timerInterval, setTimerInterval] = useState<number | null>(null); // Timer interval for clearing
   const [timeUpModalOpen, setTimeUpModalOpen] = useState(false); // Modal state for Time up
+  const [playerLevel, setPlayerLevel] = useState(1); // Track the player's level
+  const [points, setPoints] = useState(0); // Track the player's points
 
   const navigate = useNavigate();
 
@@ -88,8 +91,10 @@ const Home = () => {
       setResultColor("green.500");
       setShowNext(true);
       setCorrectStreak((prev) => prev + 1);
+      setPoints((prev) => prev + 100); // Add 100 points for correct answer
       setQuickAnswerTime((Date.now() - startTime) / 1000);
       setLevel((prev) => prev + 1);
+      setPlayerLevel((prev) => prev + (correctStreak % 5 === 0 ? 1 : 0)); // Increase level after every 5 consecutive correct answers
     } else {
       const newLives = lives - 1;
       setLives(newLives);
@@ -239,7 +244,10 @@ const Home = () => {
           textAlign="center"
           color="teal.600"
         >
-          Welcome to Banana Game - Level {level}
+          Welcome to Banana Game
+          <Text textAlign="left" fontSize="xl">
+            Game - Level {level}
+          </Text>
         </Heading>
         <Flex alignItems="center">
           <IconButton
@@ -262,7 +270,6 @@ const Home = () => {
           <Text>Timer: {timer} seconds</Text>
         </HStack>
       </Box>
-
       {gameData ? (
         <HStack spacing={5} width="full" align="stretch" height="full">
           <Flex direction="column" width="50%">
@@ -325,160 +332,181 @@ const Home = () => {
             </Flex>
           </Flex>
 
-          <Box
-            width="50%"
-            height="50%"
-            p={5}
-            bg="gray.200"
-            borderRadius="md"
-            boxShadow="md"
-          >
-            <Heading size="md" mb={3} color="teal.700">
-              Achievements
-            </Heading>
-            <HStack spacing={5} wrap="wrap">
-              {achievements.length > 0 ? (
-                achievements.map((achievement, index) => (
-                  <Box key={index}>
-                    {/* Icon and Achievement Name */}
-                    {achievement === "First Win" && (
-                      <Box
-                        p={5}
-                        bg="yellow.100"
-                        borderRadius="md"
-                        boxShadow="md"
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                      >
-                        <FaTrophy color="gold" size="20" />
-                        <Text
-                          mt={1}
-                          fontSize="sm"
-                          color="gold"
-                          textAlign="center"
-                        >
-                          {achievement}
-                        </Text>
-                      </Box>
-                    )}
+          <VStack align="left" spacing={6}>
+            {/* Level and Points */}
+            <Box
+              textAlign="center"
+              p={6}
+              bg="teal.50"
+              borderRadius="md"
+              boxShadow="md"
+              width="100%"
+              maxWidth="200px"
+            >
+              <Heading as="h3" fontSize="2xl" color="teal.700" mb={2}>
+                Level: {playerLevel}
+              </Heading>
+              <Text fontSize="lg" color="teal.600">
+                Points: {points}
+              </Text>
+            </Box>
 
-                    {achievement === "Streak Master" && (
-                      <Box
-                        p={5}
-                        bg="gray.100"
-                        borderRadius="md"
-                        boxShadow="md"
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                      >
-                        <FaMedal color="silver" size="24" />
-                        <Text
-                          mt={2}
-                          fontSize="sm"
-                          color="silver"
-                          textAlign="center"
+            {/* Achievements Section */}
+            <Box
+              width="100%"
+              maxWidth="600px"
+              p={5}
+              bg="gray.100"
+              borderRadius="md"
+              boxShadow="md"
+            >
+              <Heading size="lg" mb={4} color="teal.700" textAlign="left">
+                Achievements
+              </Heading>
+              <HStack spacing={6} wrap="wrap" justify="center">
+                {achievements.length > 0 ? (
+                  achievements.map((achievement, index) => (
+                    <Box key={index}>
+                      {/* Icon and Achievement Name */}
+                      {achievement === "First Win" && (
+                        <Box
+                          p={5}
+                          bg="yellow.100"
+                          borderRadius="md"
+                          boxShadow="md"
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="center"
                         >
-                          {achievement}
-                        </Text>
-                      </Box>
-                    )}
+                          <FaTrophy color="gold" size="20" />
+                          <Text
+                            mt={1}
+                            fontSize="sm"
+                            color="gold"
+                            textAlign="center"
+                          >
+                            {achievement}
+                          </Text>
+                        </Box>
+                      )}
 
-                    {achievement === "Quick Thinker" && (
-                      <Box
-                        p={5}
-                        bg="blue.100"
-                        borderRadius="md"
-                        boxShadow="md"
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                      >
-                        <FaClock color="blue" size="24" />
-                        <Text
-                          mt={2}
-                          fontSize="sm"
-                          color="blue"
-                          textAlign="center"
+                      {achievement === "Streak Master" && (
+                        <Box
+                          p={5}
+                          bg="gray.100"
+                          borderRadius="md"
+                          boxShadow="md"
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="center"
                         >
-                          {achievement}
-                        </Text>
-                      </Box>
-                    )}
+                          <FaMedal color="silver" size="24" />
+                          <Text
+                            mt={2}
+                            fontSize="sm"
+                            color="silver"
+                            textAlign="center"
+                          >
+                            {achievement}
+                          </Text>
+                        </Box>
+                      )}
 
-                    {achievement === "Life Saver" && (
-                      <Box
-                        p={5}
-                        bg="red.100"
-                        borderRadius="md"
-                        boxShadow="md"
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                      >
-                        <FaHeart color="red" size="24" />
-                        <Text
-                          mt={2}
-                          fontSize="sm"
-                          color="red"
-                          textAlign="center"
+                      {achievement === "Quick Thinker" && (
+                        <Box
+                          p={5}
+                          bg="blue.100"
+                          borderRadius="md"
+                          boxShadow="md"
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="center"
                         >
-                          {achievement}
-                        </Text>
-                      </Box>
-                    )}
+                          <FaClock color="blue" size="24" />
+                          <Text
+                            mt={2}
+                            fontSize="sm"
+                            color="blue"
+                            textAlign="center"
+                          >
+                            {achievement}
+                          </Text>
+                        </Box>
+                      )}
 
-                    {achievement === "Comeback King" && (
-                      <Box
-                        p={5}
-                        bg="green.100"
-                        borderRadius="md"
-                        boxShadow="md"
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                      >
-                        <FaThumbsUp color="green" size="24" />
-                        <Text
-                          mt={2}
-                          fontSize="sm"
-                          color="green"
-                          textAlign="center"
+                      {achievement === "Life Saver" && (
+                        <Box
+                          p={5}
+                          bg="red.100"
+                          borderRadius="md"
+                          boxShadow="md"
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="center"
                         >
-                          {achievement}
-                        </Text>
-                      </Box>
-                    )}
+                          <FaHeart color="red" size="24" />
+                          <Text
+                            mt={2}
+                            fontSize="sm"
+                            color="red"
+                            textAlign="center"
+                          >
+                            {achievement}
+                          </Text>
+                        </Box>
+                      )}
 
-                    {achievement === "Perfectionist" && (
-                      <Box
-                        p={5}
-                        bg="purple.100"
-                        borderRadius="md"
-                        boxShadow="md"
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                      >
-                        <FaTrophy color="purple" size="24" />
-                        <Text
-                          mt={2}
-                          fontSize="sm"
-                          color="purple"
-                          textAlign="center"
+                      {achievement === "Comeback King" && (
+                        <Box
+                          p={5}
+                          bg="green.100"
+                          borderRadius="md"
+                          boxShadow="md"
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="center"
                         >
-                          {achievement}
-                        </Text>
-                      </Box>
-                    )}
-                  </Box>
-                ))
-              ) : (
-                <Text>No achievements yet</Text>
-              )}
-            </HStack>
-          </Box>
+                          <FaThumbsUp color="green" size="24" />
+                          <Text
+                            mt={2}
+                            fontSize="sm"
+                            color="green"
+                            textAlign="center"
+                          >
+                            {achievement}
+                          </Text>
+                        </Box>
+                      )}
+
+                      {achievement === "Perfectionist" && (
+                        <Box
+                          p={5}
+                          bg="purple.100"
+                          borderRadius="md"
+                          boxShadow="md"
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="center"
+                        >
+                          <FaTrophy color="purple" size="24" />
+                          <Text
+                            mt={2}
+                            fontSize="sm"
+                            color="purple"
+                            textAlign="center"
+                          >
+                            {achievement}
+                          </Text>
+                        </Box>
+                      )}
+                    </Box>
+                  ))
+                ) : (
+                  <Text color="gray.500">No achievements yet</Text>
+                )}
+              </HStack>
+            </Box>
+          </VStack>
         </HStack>
       ) : (
         <Text>No game data available</Text>
