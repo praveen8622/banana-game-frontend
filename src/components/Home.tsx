@@ -49,6 +49,7 @@ const Home = () => {
   const [timeUpModalOpen, setTimeUpModalOpen] = useState(false); // Modal state for Time up
   const [playerLevel, setPlayerLevel] = useState(1); // Track the player's level
   const [points, setPoints] = useState(0); // Track the player's points
+  const [pointsForNextLevel, setPointsForNextLevel] = useState(500); // Points required for the next level
 
   const navigate = useNavigate();
 
@@ -91,7 +92,8 @@ const Home = () => {
       setResultColor("green.500");
       setShowNext(true);
       setCorrectStreak((prev) => prev + 1);
-      setPoints((prev) => prev + 100); // Add 100 points for correct answer
+      setPoints((prev) => prev + 100);
+      setPointsForNextLevel(500 * level);
       setQuickAnswerTime((Date.now() - startTime) / 1000);
       setLevel((prev) => prev + 1);
       setPlayerLevel((prev) => prev + (correctStreak % 5 === 0 ? 1 : 0)); // Increase level after every 5 consecutive correct answers
@@ -235,7 +237,7 @@ const Home = () => {
   }
 
   return (
-    <Box minH="100vh" bg="gray.100" p={5}>
+    <Box>
       <Flex justifyContent="space-between" alignItems="center">
         <Heading
           as="h1"
@@ -258,7 +260,7 @@ const Home = () => {
             onClick={handleLogout}
             mr={2} // Margin to space out the icon and the text
           />
-          <Text onClick={handleLogout} color="teal.500" cursor="pointer">
+          <Text onClick={handleLogout} color="teal.700" cursor="pointer">
             Logout
           </Text>
         </Flex>
@@ -347,14 +349,14 @@ const Home = () => {
                 Level: {playerLevel}
               </Heading>
               <Text fontSize="lg" color="teal.600">
-                Points: {points}
+                Points: {points} / {pointsForNextLevel}
               </Text>
             </Box>
 
             {/* Achievements Section */}
             <Box
-              width="100%"
-              maxWidth="600px"
+              width="800px"
+              height="200px"
               p={5}
               bg="gray.100"
               borderRadius="md"
