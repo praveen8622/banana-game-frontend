@@ -27,7 +27,7 @@ const Login = () => {
     e.preventDefault();
     const response = await login(username, password);
     if (response) {
-      navigate("/home");
+      navigate("/dashboard");
     }
   };
 

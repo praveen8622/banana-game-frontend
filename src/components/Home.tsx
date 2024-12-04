@@ -31,6 +31,8 @@ import { useState, useEffect, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import useGameData from "../hooks/useGetGame";
+import { BsBack } from "react-icons/bs";
+import { BiArrowToLeft } from "react-icons/bi";
 
 const Home = () => {
   const { gameData, isLoading, error, refetch, isFetching } = useGameData();
@@ -139,8 +141,8 @@ const Home = () => {
     }
   };
 
-  const handleLogout = () => {
-    navigate("/login");
+  const handleBack = () => {
+    navigate("/dashboard");
   };
 
   const renderHearts = () => {
@@ -253,15 +255,15 @@ const Home = () => {
         </Heading>
         <Flex alignItems="center">
           <IconButton
-            icon={<FiLogOut />}
-            aria-label="Logout"
+            icon={<BiArrowToLeft />}
+            aria-label="Back"
             colorScheme="teal"
             variant="outline"
-            onClick={handleLogout}
+            onClick={handleBack}
             mr={2} // Margin to space out the icon and the text
           />
-          <Text onClick={handleLogout} color="teal.700" cursor="pointer">
-            Logout
+          <Text onClick={handleBack} color="teal.700" cursor="pointer">
+            Back
           </Text>
         </Flex>
       </Flex>
